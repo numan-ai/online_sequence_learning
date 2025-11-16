@@ -43,15 +43,15 @@ def main() -> None:
     dim = 2048
     sparsity = 0.01
 
-    start_q = np.eye(dim)[0]
+    init_path_vector = np.eye(dim)[0]
 
-    X1  = Func("X1", dim=dim, sparsity=sparsity)
-    X2  = Func("X2", dim=dim, sparsity=sparsity)
-    MID = Func("MID", dim=dim, sparsity=sparsity)
-    Y1  = Func("Y1", dim=dim, sparsity=sparsity)
-    Y2  = Func("Y2", dim=dim, sparsity=sparsity)
+    EnemyLeft  = Func("EnemyLeft", dim=dim, sparsity=sparsity)
+    EnemyRight  = Func("EnemyRight", dim=dim, sparsity=sparsity)
+    Pain = Func("Pain", dim=dim, sparsity=sparsity)
+    GoRight  = Func("GoRight", dim=dim, sparsity=sparsity)
+    GoLeft  = Func("GoLeft", dim=dim, sparsity=sparsity)
 
-    funcs = [X1, X2, MID, Y1, Y2]
+    funcs = [EnemyLeft, EnemyRight, Pain, GoRight, GoLeft]
 
     # hyperparams
     tau   = 0.35     # routing threshold
@@ -60,37 +60,37 @@ def main() -> None:
     eps   = 1e-3     # update gate for tiny context
 
     # training: learn both X1->MID->Y1 and X2->MID->Y2
-    r = np.zeros(dim)
+    context = np.zeros(dim)
     for _ in range(5):
         # Scenario X1->MID->Y1
-        q = start_q
-        q, r = fire_and_learn(X1, q, r, beta, gamma, eps)
-        r = wait(r, steps=2, gamma=gamma)
-        q, r = fire_and_learn(MID, q, r, beta, gamma, eps)
-        r = wait(r, steps=2, gamma=gamma)
-        q, r = fire_and_learn(Y1, q, r, beta, gamma, eps)
+        path_vector = init_path_vector
+        path_vector, context = fire_and_learn(EnemyLeft, path_vector, context, beta, gamma, eps)
+        context = wait(context, steps=2, gamma=gamma)  # decays context
+        path_vector, context = fire_and_learn(Pain, path_vector, context, beta, gamma, eps)
+        context = wait(context, steps=2, gamma=gamma)
+        path_vector, context = fire_and_learn(GoRight, path_vector, context, beta, gamma, eps)
         # long gap between scenarios
-        r = wait(r, steps=300, gamma=gamma)
+        context = wait(context, steps=300, gamma=gamma)
 
         # Scenario X2->MID->Y2
-        q = start_q
-        q, r = fire_and_learn(X2, q, r, beta, gamma, eps) 
-        r = wait(r, steps=2, gamma=gamma)
-        q, r = fire_and_learn(MID, q, r, beta, gamma, eps)
-        r = wait(r, steps=2, gamma=gamma)
-        q, r = fire_and_learn(Y2, q, r, beta, gamma, eps)
+        path_vector = init_path_vector
+        path_vector, context = fire_and_learn(EnemyRight, path_vector, context, beta, gamma, eps) 
+        context = wait(context, steps=2, gamma=gamma)
+        path_vector, context = fire_and_learn(Pain, path_vector, context, beta, gamma, eps)
+        context = wait(context, steps=2, gamma=gamma)
+        path_vector, context = fire_and_learn(GoLeft, path_vector, context, beta, gamma, eps)
         # long gap between scenarios
-        r = wait(r, steps=300, gamma=gamma)
+        context = wait(context, steps=300, gamma=gamma)
 
     # ------- test 1: X1->MID->Y1 -------
-    q = start_q
-    q = X1(q); print("After X1:", route_threshold(X1, q, funcs, tau))
-    q = MID(q); print("After X1->MID:", route_threshold(MID, q, funcs, tau))
+    path_vector = init_path_vector
+    path_vector = EnemyLeft(path_vector); print("After X1:", route_threshold(EnemyLeft, path_vector, funcs, tau))
+    path_vector = Pain(path_vector); print("After X1->MID:", route_threshold(Pain, path_vector, funcs, tau))
 
     # ------- test 2: X2->MID->Y2 -------
-    q = start_q
-    q = X2(q); print("After X2:", route_threshold(X2, q, funcs, tau))
-    q = MID(q); print("After X2->MID:", route_threshold(MID, q, funcs, tau))
+    path_vector = init_path_vector
+    path_vector = EnemyRight(path_vector); print("After X2:", route_threshold(EnemyRight, path_vector, funcs, tau))
+    path_vector = Pain(path_vector); print("After X2->MID:", route_threshold(Pain, path_vector, funcs, tau))
 
 
 # =================== demo: simultaneous learning ===================
