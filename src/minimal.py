@@ -59,10 +59,10 @@ def main() -> None:
     gamma = 0.8      # context decay
     eps   = 1e-3     # update gate for tiny context
 
-    # training: learn both X1->MID->Y1 and X2->MID->Y2
+    # training: learn both EnemyLeft->Pain->GoRight and EnemyRight->Pain->GoLeft
     context = np.zeros(dim)
     for _ in range(5):
-        # Scenario X1->MID->Y1
+        # Scenario EnemyLeft->Pain->GoRight
         path_vector = init_path_vector
         path_vector, context = fire_and_learn(EnemyLeft, path_vector, context, beta, gamma, eps)
         context = wait(context, steps=2, gamma=gamma)  # decays context
@@ -72,7 +72,7 @@ def main() -> None:
         # long gap between scenarios
         context = wait(context, steps=300, gamma=gamma)
 
-        # Scenario X2->MID->Y2
+        # Scenario EnemyRight->Pain->GoLeft
         path_vector = init_path_vector
         path_vector, context = fire_and_learn(EnemyRight, path_vector, context, beta, gamma, eps) 
         context = wait(context, steps=2, gamma=gamma)
@@ -82,15 +82,15 @@ def main() -> None:
         # long gap between scenarios
         context = wait(context, steps=300, gamma=gamma)
 
-    # ------- test 1: X1->MID->Y1 -------
+    # ------- test 1: EnemyLeft->Pain->GoRight -------
     path_vector = init_path_vector
-    path_vector = EnemyLeft(path_vector); print("After X1:", route_threshold(EnemyLeft, path_vector, funcs, tau))
-    path_vector = Pain(path_vector); print("After X1->MID:", route_threshold(Pain, path_vector, funcs, tau))
+    path_vector = EnemyLeft(path_vector); print("After EnemyLeft:", route_threshold(EnemyLeft, path_vector, funcs, tau))
+    path_vector = Pain(path_vector); print("After EnemyLeft->Pain:", route_threshold(Pain, path_vector, funcs, tau))
 
-    # ------- test 2: X2->MID->Y2 -------
+    # ------- test 2: EnemyRight->Pain->GoLeft -------
     path_vector = init_path_vector
-    path_vector = EnemyRight(path_vector); print("After X2:", route_threshold(EnemyRight, path_vector, funcs, tau))
-    path_vector = Pain(path_vector); print("After X2->MID:", route_threshold(Pain, path_vector, funcs, tau))
+    path_vector = EnemyRight(path_vector); print("After EnemyRight:", route_threshold(EnemyRight, path_vector, funcs, tau))
+    path_vector = Pain(path_vector); print("After EnemyRight->Pain:", route_threshold(Pain, path_vector, funcs, tau))
 
 
 # =================== demo: simultaneous learning ===================
